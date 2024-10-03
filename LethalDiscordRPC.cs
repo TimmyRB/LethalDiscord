@@ -112,13 +112,6 @@ namespace LethalDiscord
                         currentMoon = StartOfRound.Instance.currentLevel.PlanetName;
                     }
                 }
-                else
-                {
-                    SetPreviousActivity();
-                    currentActivity = LethalDiscordActivityType.MainMenu;
-                    partyJoinSecret = null;
-                    isPartyJoinable = false;
-                }
 
                 currentPartySize = StartOfRound.Instance.connectedPlayersAmount + 1;
                 if (GameNetworkManager.Instance != null)
@@ -138,6 +131,15 @@ namespace LethalDiscord
                     float num = (float)StartOfRound.Instance.GetValueOfAllScrap() / (float)TimeOfDay.Instance.profitQuota * 100f;
                     state = $"{(int)num}% of quota | {TimeOfDay.Instance.daysUntilDeadline} days left";
                 }
+            }
+            else
+            {
+                SetPreviousActivity();
+                currentActivity = LethalDiscordActivityType.MainMenu;
+                currentMoon = null;
+                state = null;
+                partyJoinSecret = null;
+                isPartyJoinable = false;
             }
 
             SetStatus();
@@ -220,7 +222,7 @@ namespace LethalDiscord
             {
                 Details = details,
                 State = state,
-                Party = party,
+                Party = currentActivity != LethalDiscordActivityType.MainMenu ? party : new ActivityParty(),
                 Timestamps = timestamps,
                 Assets = assets,
                 //Secrets = secrets,
