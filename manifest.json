@@ -1,0 +1,9 @@
+{
+  "name": "LethalDiscord",
+  "version_number": "1.0.0",
+  "website_url": "https://github.com/TimmyRB/LethalDiscord",
+  "description": "A simple mod for Lethal Company that adds support for Discord's Rich Presence",
+  "dependencies": [
+    "BepInEx-BepInExPack-5.4.2100"
+  ]
+}
