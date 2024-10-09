@@ -1,4 +1,5 @@
 ﻿using BepInEx;
+using BepInEx.Bootstrap;
 using BepInEx.Logging;
 using HarmonyLib;
 using UnityEngine;
@@ -10,7 +11,7 @@ namespace LethalDiscord
     {
         private const string modGUID = "com.jacobbrasil.LethalDiscord";
         private const string modName = "LethalDiscord";
-        private const string modVersion = "1.0.0";
+        private const string modVersion = "1.3.0";
 
         private readonly Harmony harmony = new Harmony(modGUID);
 
@@ -23,6 +24,13 @@ namespace LethalDiscord
             if (Instance == null)
             {
                 Instance = this;
+            }
+
+            ConfigManager.Init(Config);
+
+            if (Chainloader.PluginInfos.ContainsKey("ainavt.lc.lethalconfig"))
+            {
+                LethalConfigManager.Init();
             }
 
             LOG = BepInEx.Logging.Logger.CreateLogSource(modName);

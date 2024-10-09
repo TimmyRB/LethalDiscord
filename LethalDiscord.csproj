@@ -30,6 +30,10 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <LangVersion>8.0</LangVersion>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="0Harmony">
       <HintPath>D:\Programs\Steam\steamapps\common\Lethal Company\BepInEx\core\0Harmony.dll</HintPath>
@@ -43,6 +47,9 @@
     <Reference Include="Facepunch.Steamworks.Win64, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>D:\Programs\Steam\steamapps\common\Lethal Company\Lethal Company_Data\Managed\Facepunch.Steamworks.Win64.dll</HintPath>
+    </Reference>
+    <Reference Include="LethalConfig">
+      <HintPath>D:\Programs\Steam\steamapps\common\Lethal Company\BepInEx\plugins\LethalConfig\LethalConfig.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
@@ -65,6 +72,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConfigManager.cs" />
+    <Compile Include="GameValues.cs" />
+    <Compile Include="LethalConfigManager.cs" />
     <Compile Include="LethalDiscordRPC.cs" />
     <Compile Include="DiscordGame SDK\ActivityManager.cs" />
     <Compile Include="DiscordGame SDK\Constants.cs" />

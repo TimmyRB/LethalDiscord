@@ -1,45 +1,19 @@
 ﻿using UnityEngine;
 using Discord;
 using System;
+using UnityEngine.SceneManagement;
+using Steamworks;
 
 namespace LethalDiscord
 {
-    public enum LethalDiscordActivityType
-    {
-        MainMenu,
-        WaitingForPlayers,
-        InOrbit,
-        OnMoon,
-        Ejected,
-    }
-
     public class LethalDiscordRPC : MonoBehaviour
     {
         public static LethalDiscordRPC Instance { get; private set; }
         private Discord.Discord DiscordClient;
 
-        private LethalDiscordActivityType prevActivity = LethalDiscordActivityType.MainMenu;
-        private LethalDiscordActivityType currentActivity = LethalDiscordActivityType.MainMenu;
+        private float timeAtLastStatusUpdate = 0;
 
-        private string currentMoon;
-
-        private string state;
-
-        private string partyId;
-
-        private int currentPartySize = 1;
-
-        private int maxPartySize = 4;
-
-        private bool isPartyJoinable = false;
-
-        private string partyJoinSecret;
-
-        private long roundStartTimestamp;
-
-        private float timeAtLastStatusUpdate;
-
-        private void Awake()
+        void Awake()
         {
             if (Instance == null)
             {
@@ -55,7 +29,7 @@ namespace LethalDiscord
             LethalDiscordPlugin.LOG.LogInfo("LethalDiscordRPC has been loaded!");
         }
 
-        private void Start()
+        void Start()
         {
             DiscordClient = new Discord.Discord(1291262348975411311, (ulong)CreateFlags.NoRequireDiscord);
 
@@ -64,207 +38,112 @@ namespace LethalDiscord
 
             DiscordClient.SetLogHook(LogLevel.Debug, LogDiscord);
 
-            roundStartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            SceneManager.sceneLoaded += OnSceneLoaded;
 
-            if (StartOfRound.Instance != null)
+            SteamMatchmaking.OnLobbyDataChanged += (lobby) =>
             {
-                string levels = "";
-                foreach (var level in StartOfRound.Instance.levels)
+                GameValues.SetMaxPartySize(lobby.MaxMembers);
+                GameValues.SetPartyId(lobby.Id.ToString());
+            };
+
+            activityManager.OnActivityJoin += (secret) =>
+            {
+                SteamId lobbyId = ulong.Parse(secret);
+                Steamworks.Data.Lobby lobby = new Steamworks.Data.Lobby(lobbyId);
+
+                try
                 {
-                    levels += level.PlanetName + ", ";
+                    GameNetworkManager.Instance?.JoinLobby(lobby, lobbyId);
                 }
-                LethalDiscordPlugin.LOG.LogInfo($"Possible Levels: {levels}");
-            }
+                catch (Exception e)
+                {
+                    LethalDiscordPlugin.LOG.LogError($"Failed to join lobby: {e.Message}");
+                }
+            };
+
+            UpdateDiscordActivity(true);
         }
 
-        private void Update()
+        void Update()
         {
             DiscordClient.RunCallbacks();
         }
 
-        private void FixedUpdate()
+        void FixedUpdate()
         {
-            if (StartOfRound.Instance != null)
-            {
-                if (StartOfRound.Instance.currentLevel != null)
-                {
-                    if (StartOfRound.Instance.firingPlayersCutsceneRunning)
-                    {
-                        SetPreviousActivity();
-                        currentActivity = LethalDiscordActivityType.Ejected;
-                    }
-                    else if (GameNetworkManager.Instance != null && !GameNetworkManager.Instance.gameHasStarted)
-                    {
-                        SetPreviousActivity();
-                        currentActivity = LethalDiscordActivityType.WaitingForPlayers;
-                    }
-                    else if (StartOfRound.Instance.inShipPhase)
-                    {
-                        SetPreviousActivity();
-                        currentActivity = LethalDiscordActivityType.InOrbit;
-                        currentMoon = StartOfRound.Instance.currentLevel.PlanetName;
-                    }
-                    else if (HUDManager.Instance != null)
-                    {
-                        state = HUDManager.Instance.SetClock(TimeOfDay.Instance.normalizedTimeOfDay, TimeOfDay.Instance.numberOfHours, createNewLine: false);
-                        SetPreviousActivity();
-                        currentActivity = LethalDiscordActivityType.OnMoon;
-                        currentMoon = StartOfRound.Instance.currentLevel.PlanetName;
-                    }
-                }
-
-                currentPartySize = StartOfRound.Instance.connectedPlayersAmount + 1;
-                if (GameNetworkManager.Instance != null)
-                {
-                    maxPartySize = GameNetworkManager.Instance.maxAllowedPlayers;
-                    isPartyJoinable = currentPartySize < maxPartySize;
-
-                    if (GameNetworkManager.Instance.currentLobby.HasValue)
-                    {
-                        partyId = Convert.ToString(GameNetworkManager.Instance.currentLobby.Value.Owner.Id);
-                        partyJoinSecret = GameNetworkManager.Instance.steamLobbyName;
-                    }
-                }
-
-                if (RoundManager.Instance != null && StartOfRound.Instance.inShipPhase)
-                {
-                    float num = (float)StartOfRound.Instance.GetValueOfAllScrap() / (float)TimeOfDay.Instance.profitQuota * 100f;
-                    state = $"{(int)num}% of quota | {TimeOfDay.Instance.daysUntilDeadline} days left";
-                }
-            }
-            else
-            {
-                SetPreviousActivity();
-                currentActivity = LethalDiscordActivityType.MainMenu;
-                currentMoon = null;
-                state = null;
-                partyJoinSecret = null;
-                isPartyJoinable = false;
-            }
-
-            SetStatus();
+            UpdateDiscordActivity(false);
         }
 
-        public void SetStatus()
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            if (Time.realtimeSinceStartup - timeAtLastStatusUpdate < 2f)
+            UpdateDiscordActivity(true);
+        }
+
+        private void UpdateDiscordActivity(bool isLoad)
+        {
+            if (Time.realtimeSinceStartup - timeAtLastStatusUpdate < ConfigManager.Instance.DiscordUpdateInterval.Value && !isLoad)
                 return;
 
             timeAtLastStatusUpdate = Time.realtimeSinceStartup;
 
-            string details = "";
-
-            string largeAsset = "";
-            string largeAssetText = "";
-
-            string smallAsset = "";
-            string smallAssetString = "";
-
-            switch (currentActivity)
+            if (isLoad)
             {
-                case LethalDiscordActivityType.MainMenu:
-                    details = "Main Menu";
-                    largeAsset = "mainmenu";
-                    largeAssetText = "Main Menu";
-                    break;
-                case LethalDiscordActivityType.WaitingForPlayers:
-                    details = "Waiting for players";
-                    largeAsset = "orbit";
-                    largeAssetText = "Orbiting";
-                    break;
-                case LethalDiscordActivityType.InOrbit:
-                    details = $"Orbiting {currentMoon}";
-                    largeAsset = currentMoon.ToLower().Replace(" ", "-");
-                    largeAssetText = currentMoon;
-                    break;
-                case LethalDiscordActivityType.OnMoon:
-                    details = $"Exploring {currentMoon}";
-                    largeAsset = currentMoon.ToLower().Replace(" ", "-");
-                    largeAssetText = currentMoon;
-                    break;
-                case LethalDiscordActivityType.Ejected:
-                    details = "Ejected";
-                    largeAsset = "orbit";
-                    largeAssetText = "Ejected";
-                    break;
-            }
-
-            ActivityParty party = new ActivityParty
-            {
-                Id = partyId,
-                Size = new PartySize
+                DiscordClient.GetActivityManager().ClearActivity((result) =>
                 {
-                    CurrentSize = currentPartySize,
-                    MaxSize = maxPartySize,
-                },
-                Privacy = ActivityPartyPrivacy.Public,
-            };
+                    if (result != Discord.Result.Ok)
+                    {
+                        LethalDiscordPlugin.LOG.LogError($"Failed to clear activity: {result}");
+                    }
+                });
 
-            ActivityTimestamps timestamps = new ActivityTimestamps
-            {
-                Start = roundStartTimestamp,
-            };
+                GameValues.StartNewRoundTimestamp();
 
-            ActivityAssets assets = new ActivityAssets
-            {
-                LargeImage = largeAsset,
-                LargeText = largeAssetText,
-                SmallImage = smallAssetString,
-                SmallText = smallAsset,
-            };
-
-            ActivitySecrets secrets = new ActivitySecrets
-            {
-                Join = isPartyJoinable ? partyJoinSecret : null,
-            };
+                if (GameValues.GetActivityType() == LethalDiscordActivityType.MainMenu)
+                {
+                    GameValues.SetPartyId(null);
+                    GameValues.SetMaxPartySize(1);
+                }
+            }
 
             Activity activity = new Activity
             {
-                Details = details,
-                State = state,
-                Party = currentActivity != LethalDiscordActivityType.MainMenu ? party : new ActivityParty(),
-                Timestamps = timestamps,
-                Assets = assets,
-                //Secrets = secrets,
+                Details = GameValues.GetActivityName(),
+                State = GameValues.GetPartyState() ?? "",
+                Assets = new ActivityAssets
+                {
+                    LargeImage = GameValues.GetLargeAssetImage() ?? "",
+                    LargeText = GameValues.GetLargeAssetText() ?? "",
+                    SmallImage = GameValues.GetSmallAssetImage() ?? "",
+                    SmallText = GameValues.GetSmallAssetText() ?? "",
+                },
+                Timestamps = new ActivityTimestamps
+                {
+                    Start = GameValues.GetRoundStartTimestamp(),
+                },
+                Party = GameValues.GetMaxPartySize() > 1 ? new ActivityParty
+                {
+                    Id = GameValues.GetPartyOwnerId() ?? "",
+                    Size = new PartySize
+                    {
+                        CurrentSize = GameValues.GetPartySize(),
+                        MaxSize = GameValues.GetMaxPartySize(),
+                    },
+                    Privacy = GameValues.GetPartyPrivacy(),
+                } : new ActivityParty(),
+                Secrets = (GameValues.GetPartyId() != null && GameValues.GetIsPartyJoinable()) ? new ActivitySecrets
+                {
+                    Join = GameValues.GetPartyId(),
+                } : new ActivitySecrets(),
                 Instance = true,
             };
 
-            DiscordClient.GetActivityManager().UpdateActivity(activity, result =>
+            DiscordClient.GetActivityManager().UpdateActivity(activity, (result) =>
             {
-                if (result != Result.Ok)
+                if (result != Discord.Result.Ok)
                 {
-                    LogDiscord(LogLevel.Error, $"Failed to update activity: {result}");
+                    LethalDiscordPlugin.LOG.LogError($"Failed to update activity: {result}");
                 }
             });
-        }
-
-        private void SetPreviousActivity()
-        {
-            if (prevActivity != currentActivity)
-            {
-                prevActivity = currentActivity;
-
-                if (prevActivity == LethalDiscordActivityType.MainMenu)
-                {
-                    roundStartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                }
-                else if (prevActivity == LethalDiscordActivityType.WaitingForPlayers)
-                {
-                    roundStartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                }
-                else if (prevActivity == LethalDiscordActivityType.InOrbit)
-                {
-                    roundStartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                }
-                else if (prevActivity == LethalDiscordActivityType.OnMoon)
-                {
-                    roundStartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                }
-                else if (prevActivity == LethalDiscordActivityType.Ejected)
-                {
-                    roundStartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                }
-            }
         }
 
         private void LogDiscord(LogLevel level, string message)
@@ -286,23 +165,20 @@ namespace LethalDiscord
             }
         }
 
-        private void OnDestroy()
+        void OnDestroy()
         {
             LethalDiscordPlugin.LOG.LogInfo("LethalDiscordRPC has been destroyed!");
             LethalDiscordPlugin.IsDiscordRPCActive = false;
             LethalDiscordPlugin.CreateDiscordRPC();
-            if (DiscordClient != null)
-            {
-                DiscordClient.Dispose();
-            }
+            DiscordClient?.Dispose();
         }
 
-        private void OnApplicationQuit()
+        void OnApplicationQuit()
         {
-            if (DiscordClient != null)
-            {
-                DiscordClient.Dispose();
-            }
+            LethalDiscordPlugin.LOG.LogInfo("LethalDiscordRPC has been destroyed!");
+            LethalDiscordPlugin.IsDiscordRPCActive = false;
+            LethalDiscordPlugin.CreateDiscordRPC();
+            DiscordClient?.Dispose();
         }
     }
 }
