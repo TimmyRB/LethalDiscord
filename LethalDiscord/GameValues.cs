@@ -1,15 +1,12 @@
 ﻿using Discord;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using LethalDiscord.Managers;
 
 #nullable enable
 namespace LethalDiscord
 {
 
-    public enum LethalDiscordActivityType
+    internal enum LethalDiscordActivityType
     {
         MainMenu,
         WaitingForPlayers,

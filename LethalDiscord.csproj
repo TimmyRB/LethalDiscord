@@ -72,18 +72,19 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ConfigManager.cs" />
-    <Compile Include="GameValues.cs" />
-    <Compile Include="LethalConfigManager.cs" />
-    <Compile Include="LethalDiscordRPC.cs" />
-    <Compile Include="DiscordGame SDK\ActivityManager.cs" />
-    <Compile Include="DiscordGame SDK\Constants.cs" />
-    <Compile Include="DiscordGame SDK\Core.cs" />
-    <Compile Include="DiscordGame SDK\ImageManager.cs" />
-    <Compile Include="DiscordGame SDK\LobbyManager.cs" />
-    <Compile Include="DiscordGame SDK\StorageManager.cs" />
-    <Compile Include="DiscordGame SDK\StoreManager.cs" />
-    <Compile Include="LethalDiscordPlugin.cs" />
+    <Compile Include="LethalDiscord\Managers\ConfigManager.cs" />
+    <Compile Include="LethalDiscord\GameValues.cs" />
+    <Compile Include="LethalDiscord\Managers\LethalConfigManager.cs" />
+    <Compile Include="LethalDiscord\LethalDiscordAPI.cs" />
+    <Compile Include="LethalDiscord\Components\LethalDiscordRPC.cs" />
+    <Compile Include="LethalDiscord\DiscordGame SDK\ActivityManager.cs" />
+    <Compile Include="LethalDiscord\DiscordGame SDK\Constants.cs" />
+    <Compile Include="LethalDiscord\DiscordGame SDK\Core.cs" />
+    <Compile Include="LethalDiscord\DiscordGame SDK\ImageManager.cs" />
+    <Compile Include="LethalDiscord\DiscordGame SDK\LobbyManager.cs" />
+    <Compile Include="LethalDiscord\DiscordGame SDK\StorageManager.cs" />
+    <Compile Include="LethalDiscord\DiscordGame SDK\StoreManager.cs" />
+    <Compile Include="LethalDiscord\Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

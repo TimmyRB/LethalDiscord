@@ -3,10 +3,11 @@ using Discord;
 using System;
 using UnityEngine.SceneManagement;
 using Steamworks;
+using LethalDiscord.Managers;
 
-namespace LethalDiscord
+namespace LethalDiscord.Components
 {
-    public class LethalDiscordRPC : MonoBehaviour
+    internal class LethalDiscordRPC : MonoBehaviour
     {
         public static LethalDiscordRPC Instance { get; private set; }
         private Discord.Discord DiscordClient;
@@ -26,7 +27,7 @@ namespace LethalDiscord
 
             DontDestroyOnLoad(this);
 
-            LethalDiscordPlugin.LOG.LogInfo("LethalDiscordRPC has been loaded!");
+            Plugin.LOG.LogInfo("LethalDiscordRPC has been loaded!");
         }
 
         void Start()
@@ -57,7 +58,7 @@ namespace LethalDiscord
                 }
                 catch (Exception e)
                 {
-                    LethalDiscordPlugin.LOG.LogError($"Failed to join lobby: {e.Message}");
+                    Plugin.LOG.LogError($"Failed to join lobby: {e.Message}");
                 }
             };
 
@@ -92,7 +93,7 @@ namespace LethalDiscord
                 {
                     if (result != Discord.Result.Ok)
                     {
-                        LethalDiscordPlugin.LOG.LogError($"Failed to clear activity: {result}");
+                        Plugin.LOG.LogError($"Failed to clear activity: {result}");
                     }
                 });
 
@@ -141,7 +142,7 @@ namespace LethalDiscord
             {
                 if (result != Discord.Result.Ok)
                 {
-                    LethalDiscordPlugin.LOG.LogError($"Failed to update activity: {result}");
+                    Plugin.LOG.LogError($"Failed to update activity: {result}");
                 }
             });
         }
@@ -151,33 +152,33 @@ namespace LethalDiscord
             switch (level)
             {
                 case LogLevel.Error:
-                    LethalDiscordPlugin.LOG.LogError($"Discord: {message}");
+                    Plugin.LOG.LogError($"Discord: {message}");
                     break;
                 case LogLevel.Warn:
-                    LethalDiscordPlugin.LOG.LogWarning($"Discord: {message}");
+                    Plugin.LOG.LogWarning($"Discord: {message}");
                     break;
                 case LogLevel.Info:
-                    LethalDiscordPlugin.LOG.LogMessage($"Discord: {message}");
+                    Plugin.LOG.LogMessage($"Discord: {message}");
                     break;
                 case LogLevel.Debug:
-                    LethalDiscordPlugin.LOG.LogDebug($"Discord: {message}");
+                    Plugin.LOG.LogDebug($"Discord: {message}");
                     break;
             }
         }
 
         void OnDestroy()
         {
-            LethalDiscordPlugin.LOG.LogInfo("LethalDiscordRPC has been destroyed!");
-            LethalDiscordPlugin.IsDiscordRPCActive = false;
-            LethalDiscordPlugin.CreateDiscordRPC();
+            Plugin.LOG.LogInfo("LethalDiscordRPC has been destroyed!");
+            Plugin.IsDiscordRPCActive = false;
+            Plugin.CreateDiscordRPC();
             DiscordClient?.Dispose();
         }
 
         void OnApplicationQuit()
         {
-            LethalDiscordPlugin.LOG.LogInfo("LethalDiscordRPC has been destroyed!");
-            LethalDiscordPlugin.IsDiscordRPCActive = false;
-            LethalDiscordPlugin.CreateDiscordRPC();
+            Plugin.LOG.LogInfo("LethalDiscordRPC has been destroyed!");
+            Plugin.IsDiscordRPCActive = false;
+            Plugin.CreateDiscordRPC();
             DiscordClient?.Dispose();
         }
     }

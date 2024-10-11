@@ -1,6 +1,6 @@
 ﻿using BepInEx.Configuration;
 
-namespace LethalDiscord
+namespace LethalDiscord.Managers
 {
     internal class ConfigManager
     {

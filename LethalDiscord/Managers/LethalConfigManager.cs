@@ -1,10 +1,8 @@
 ﻿using BepInEx;
-using LethalConfig;
 using LethalConfig.ConfigItems;
 using LethalConfig.ConfigItems.Options;
-using UnityEngine;
 
-namespace LethalDiscord
+namespace LethalDiscord.Managers
 {
     [BepInDependency("ainavt.lc.lethalconfig")]
     internal class LethalConfigManager

@@ -1,21 +1,20 @@
 ﻿using BepInEx;
 using BepInEx.Bootstrap;
 using BepInEx.Logging;
-using HarmonyLib;
 using UnityEngine;
-
+using LethalDiscord.Managers;
+using LethalDiscord.Components;
+ 
 namespace LethalDiscord
 {
     [BepInPlugin(modGUID, modName, modVersion)]
-    public class LethalDiscordPlugin : BaseUnityPlugin
+    internal class Plugin : BaseUnityPlugin
     {
         private const string modGUID = "com.jacobbrasil.LethalDiscord";
         private const string modName = "LethalDiscord";
-        private const string modVersion = "1.3.1";
+        private const string modVersion = "1.4.0";
 
-        private readonly Harmony harmony = new Harmony(modGUID);
-
-        internal static LethalDiscordPlugin Instance { get; private set; }
+        internal static Plugin Instance { get; private set; }
         internal static ManualLogSource LOG;
         internal static bool IsDiscordRPCActive;
 
@@ -37,8 +36,6 @@ namespace LethalDiscord
             LOG.LogInfo("LethalDiscord has been loaded!");
 
             CreateDiscordRPC();
-
-            harmony.PatchAll();
         }
 
         public static void CreateDiscordRPC()
